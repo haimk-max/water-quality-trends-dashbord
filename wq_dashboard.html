@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ניטור מגמות איכות מים</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Noto+Sans+Hebrew:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Rubik','Noto Sans Hebrew',sans-serif;background:#f8f9fa;color:#1a1a2e;direction:rtl}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#eee}::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px}
+
+.hdr{background:#fff;border-bottom:2px solid #e8e8e8;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,0.04)}
+.logo{display:flex;align-items:center;gap:8px}
+.logo svg{width:28px;height:28px}
+.logo h1{font-size:16px;font-weight:700;color:#1a1a2e;white-space:nowrap}
+.logo h1 span{color:#2563eb}
+select{font-family:inherit;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:500}
+select:focus{outline:none;border-color:#2563eb}
+
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:2px solid transparent;user-select:none;transition:all 0.2s}
+.pill:hover{transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+.pill.active{border-color:#1a1a2e;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+
+.cards{display:flex;gap:10px;padding:12px 24px;overflow-x:auto}
+.card{padding:14px 18px;border-radius:12px;min-width:100px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.card .cl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;opacity:0.8}
+.card .cv{font-size:28px;font-weight:700}
+
+.content{display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 140px);overflow:hidden}
+.tpanel{border-left:1px solid #e2e8f0;display:flex;flex-direction:column;overflow:hidden;background:#fff}
+.thdr{padding:8px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:10px;font-size:13px;color:#64748b}
+.tscroll{overflow-y:auto;flex:1}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;background:#f1f5f9;padding:8px 8px;text-align:right;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0;cursor:pointer;white-space:nowrap;font-size:11px;user-select:none}
+thead th:hover{color:#1e293b;background:#e2e8f0}
+thead th[title]{border-bottom-style:dotted}
+tbody tr{border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background 0.15s}
+tbody tr:hover{background:#f0f9ff}
+tbody tr.sel{background:#eff6ff;box-shadow:inset 3px 0 0 #2563eb}
+td{padding:6px 8px;white-space:nowrap;font-size:12px}
+td.mono{font-family:'Rubik',monospace;font-variant-numeric:tabular-nums}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+.b-alert{background:#fef2f2;color:#dc2626}
+.b-watch{background:#fffbeb;color:#d97706}
+.b-ok{background:#f0fdf4;color:#16a34a}
+
+.cpanel{display:flex;flex-direction:column;overflow:hidden;background:#fafbfc}
+.chdr{padding:8px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;font-weight:500}
+.cbody{flex:1;padding:12px;overflow-y:auto}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#94a3b8;gap:10px}
+.empty svg{opacity:0.3}
+.cbox{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.cbox .ct{font-size:14px;font-weight:600;margin-bottom:2px}
+.cbox .cs{font-size:11px;color:#64748b;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.srch{font-family:inherit;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;padding:6px 12px;border-radius:8px;font-size:12px;width:150px;outline:none}
+.srch:focus{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,0.1)}
+canvas{width:100%;height:170px}
+.legend{display:flex;gap:14px;font-size:10px;color:#94a3b8;margin-top:6px;flex-wrap:wrap;direction:ltr}
+.info-btn{font-family:inherit;background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1;padding:4px 10px;border-radius:8px;font-size:11px;cursor:pointer;font-weight:500}
+.info-btn:hover{background:#e2e8f0;color:#334155}
+.chk{display:flex;align-items:center;gap:4px;font-size:11px;color:#64748b;cursor:pointer;user-select:none}
+.chk input{cursor:pointer;accent-color:#2563eb}
+
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal{background:#fff;border-radius:16px;padding:28px;max-width:640px;max-height:85vh;overflow-y:auto;font-size:13px;line-height:1.7;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.15);direction:rtl}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:16px;color:#1a1a2e}
+.modal h3{font-size:14px;font-weight:600;margin:16px 0 6px;color:#334155;border-bottom:1px solid #e2e8f0;padding-bottom:4px}
+.modal p{margin-bottom:6px;color:#475569}
+.modal-close{position:absolute;top:12px;left:16px;background:none;border:none;color:#94a3b8;font-size:22px;cursor:pointer;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:#f1f5f9;color:#334155}
+</style></head><body>
+
+<div class="hdr">
+  <div class="logo">
+    <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="#2563eb" stroke-width="2"/><path d="M8 18 L11 10 L15 15 L19 8" stroke="#2563eb" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h1>ניטור מגמות <span>איכות מים</span></h1>
+  </div>
+  <select id="paramSel"><option value="ALL">כל הפרמטרים</option></select>
+  <select id="basinSel"><option value="ALL">כל האגנים</option></select>
+  <div class="pills" id="pills"></div>
+  <label class="chk"><input type="checkbox" id="uniqueChk" checked> קידוח אחד — התרעה מקסימלית</label>
+  <button class="info-btn" id="infoBtn">ℹ️ מקרא</button>
+</div>
+
+<div class="cards" id="cards"></div>
+
+<div class="content">
+  <div class="tpanel">
+    <div class="thdr">
+      <span id="wellCount"></span>
+      <input class="srch" id="searchBox" placeholder="🔍 חיפוש קידוח...">
+      <span style="margin-right:auto;font-size:10px;color:#94a3b8">לחץ על שורה לתצוגת גרף</span>
+    </div>
+    <div class="tscroll"><table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
+  </div>
+  <div class="cpanel">
+    <div class="chdr" id="chartHeader">בחר קידוחים מהטבלה ←</div>
+    <div class="cbody" id="chartBody">
+      <div class="empty">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-8"/></svg>
+        <div style="font-size:14px;font-weight:500">לחץ על קידוחים בטבלה</div>
+        <div style="font-size:12px">ניתן לבחור עד 6 קידוחים</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mo" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+<div class="modal">
+<button class="modal-close" onclick="document.getElementById('mo').style.display='none'">✕</button>
+<h2>מקרא ומתודולוגיה</h2>
+
+<h3>🔴 התרעה (Alert)</h3>
+<p>קידוח הדורש טיפול: ריכוז ≥80% מהתקן עם מגמה עולה או עלייה בשתי הדגימות האחרונות, או ריכוז 30-80% עם שניהם (מגמה + עלייה) או התקרבות לתקן תוך 5 שנים.</p>
+
+<h3>🟡 מעקב (Watch)</h3>
+<p>קיים אות (עלייה אחרונה, מגמה עולה, ריכוז גבוה, שינוי מבני) אך לא בדחיפות של התרעה. דורש תשומת לב.</p>
+
+<h3>🟢 תקין (OK)</h3>
+<p>ריכוז יציב או יורד, ללא אותות חריגים.</p>
+
+<h3>עמודות הטבלה</h3>
+<p><b>% מתקן</b> — ריכוז אחרון כאחוז מתקן מי השתייה</p>
+<p><b>אחרון</b> — ריכוז אחרון (מיקרוגרם/ליטר)</p>
+<p><b>שיפוע</b> — קצב שינוי (%מתקן/שנה). כתום=עולה, כחול=יורד</p>
+<p><b>SNR</b> — יחס אות/רעש. ≥1=חזק, 0.3-1=בינוני, <0.3=חלש</p>
+<p><b>שנים→תקן</b> — שנים עד הגעה ל-100% מהתקן בקצב הנוכחי</p>
+<p><b>⚡</b> — שתי הדגימות האחרונות בעלייה</p>
+
+<h3>גרף</h3>
+<p><span style="color:#dc2626">━━</span> תקן מי שתייה &nbsp; <span style="color:#d97706">╌╌</span> 30% מהתקן &nbsp; <span style="color:#8b5cf6">┃</span> נקודת שינוי מבני</p>
+<p>● ערך שנמדד &nbsp; ○ מתחת לסף גילוי / אפס</p>
+
+<h3>שיטות סטטיסטיות</h3>
+<p><b>Mann-Kendall (5 שנים):</b> מבחן מגמה לא-פרמטרי, מסונן לפי SNR</p>
+<p><b>Theil-Sen:</b> חציון השיפועים הזוגיים — אומדן שיפוע עמיד</p>
+<p><b>Pettitt:</b> זיהוי שינוי מבני — מופעל על הזנב האחרון של הנתונים</p>
+</div></div>
+
+<script>
+let DATA=null;
+
+const AC={
+  ALERT:{l:'התרעה',c:'#dc2626',bg:'#fef2f2',bc:'b-alert'},
+  WATCH:{l:'מעקב',c:'#d97706',bg:'#fffbeb',bc:'b-watch'},
+  OK:{l:'תקין',c:'#16a34a',bg:'#f0fdf4',bc:'b-ok'},
+};
+const PO=['ALL','ALERT','WATCH','OK'];
+const AO={ALERT:0,WATCH:1,OK:2};
+let state={param:'ALL',alert:'ALL',basin:'ALL',search:'',selected:[],sortCol:'a',sortDir:1,unique:true};
+
+function badge(a){const c=AC[a]||AC.OK;return`<span class="badge ${c.bc}">${c.l}</span>`;}
+function fmtP(p){if(p==null)return'—';if(p<0.001)return'<.001';return p<0.01?p.toFixed(3):p.toFixed(2);}
+
+function getStats(){
+  let f=DATA.stats;
+  if(state.param!=='ALL')f=f.filter(s=>s.p===state.param);
+  if(state.basin!=='ALL')f=f.filter(s=>s.b===state.basin);
+  if(state.unique&&state.param==='ALL'){
+    const wm={};f.forEach(s=>{if(!wm[s.w]||(AO[s.a]??9)<(AO[wm[s.w].a]??9))wm[s.w]=s;});f=Object.values(wm);}
+  return f;
+}
+function getCounts(){const f=getStats();const c={};f.forEach(s=>{c[s.a]=(c[s.a]||0)+1;});return c;}
+function getFiltered(){
+  let f=getStats();
+  if(state.alert!=='ALL')f=f.filter(s=>s.a===state.alert);
+  if(state.search){const st=state.search.toLowerCase();f=f.filter(s=>s.w.toLowerCase().includes(st));}
+  return[...f].sort((a,b)=>{const d=state.sortDir;switch(state.sortCol){
+    case'w':return d*a.w.localeCompare(b.w,'he');case'a':return d*((AO[a.a]??9)-(AO[b.a]??9));
+    case'pct':return d*(b.pct-a.pct);case'lc':return d*(b.lc-a.lc);case'spc':return d*((b.spc||0)-(a.spc||0));
+    case'snr':return d*((b.snr||0)-(a.snr||0));case'yt':return d*((a.yt||999)-(b.yt||999));
+    default:return 0;}});
+}
+
+function drawChart(cv,wk,st){
+  const ts=DATA.ts[wk];if(!ts){cv.style.display='none';return;}
+  const ctx=cv.getContext('2d');const W=cv.width=cv.offsetWidth*2;const H=cv.height=cv.offsetHeight*2;
+  ctx.scale(2,2);const w=W/2,h=H/2;const p={t:8,r:14,b:24,l:48};
+  const pw=w-p.l-p.r,ph=h-p.t-p.b;
+  const dates=ts.dates.map(d=>new Date(d).getTime());const vals=ts.raw;const std=st.std;
+  const minT=Math.min(...dates),maxT=Math.max(...dates);const maxV=Math.max(std*1.2,...vals)*1.1;
+  const xS=t=>p.l+(t-minT)/(maxT-minT)*pw;const yS=v=>p.t+ph-(v/maxV)*ph;
+  
+  // Grid
+  ctx.strokeStyle='#f1f5f9';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=p.t+ph*i/4;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(p.l+pw,y);ctx.stroke();}
+  
+  // Y labels
+  ctx.fillStyle='#94a3b8';ctx.font='9px Rubik';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const v=maxV*(4-i)/4;ctx.fillText(v>=1000?(v/1000).toFixed(0)+'k':v>=1?v.toFixed(0):v.toFixed(2),p.l-4,p.t+ph*i/4+3);}
+  
+  // X labels
+  ctx.textAlign='center';
+  const sY=new Date(minT).getFullYear(),eY=new Date(maxT).getFullYear();
+  const step=Math.max(1,Math.floor((eY-sY)/6));
+  for(let y=sY;y<=eY;y+=step){const t=new Date(y,0,1).getTime();if(t>=minT&&t<=maxT)ctx.fillText(y,xS(t),h-p.b+14);}
+  
+  // Standard line
+  ctx.strokeStyle='#dc2626';ctx.lineWidth=1.5;ctx.setLineDash([8,4]);
+  ctx.beginPath();ctx.moveTo(p.l,yS(std));ctx.lineTo(p.l+pw,yS(std));ctx.stroke();
+  // 30% line
+  ctx.strokeStyle='#d97706';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(p.l,yS(std*0.3));ctx.lineTo(p.l+pw,yS(std*0.3));ctx.stroke();
+  ctx.setLineDash([]);
+  // CP
+  if(st.cp){ctx.strokeStyle='#8b5cf6';ctx.lineWidth=1.5;ctx.setLineDash([6,3]);
+    const cpT=new Date(st.cp).getTime();ctx.beginPath();ctx.moveTo(xS(cpT),p.t);ctx.lineTo(xS(cpT),p.t+ph);ctx.stroke();ctx.setLineDash([]);}
+  
+  // Area fill under line
+  ctx.fillStyle='rgba(37,99,235,0.04)';ctx.beginPath();ctx.moveTo(xS(dates[0]),yS(0));
+  dates.forEach((t,i)=>ctx.lineTo(xS(t),yS(vals[i])));
+  ctx.lineTo(xS(dates[dates.length-1]),yS(0));ctx.closePath();ctx.fill();
+  
+  // Line
+  ctx.strokeStyle='#2563eb';ctx.lineWidth=2;ctx.beginPath();
+  dates.forEach((t,i)=>{const x=xS(t),y=yS(vals[i]);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.stroke();
+  
+  // Points
+  dates.forEach((t,i)=>{const x=xS(t),y=yS(vals[i]);const isB=ts.markers[i]==='<'||vals[i]===0;
+    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle=isB?'#fff':'#2563eb';ctx.fill();
+    ctx.strokeStyle=isB?'#94a3b8':'#2563eb';ctx.lineWidth=1.5;ctx.stroke();});
+}
+
+function renderPills(){
+  const c=getCounts();const t=Object.values(c).reduce((s,v)=>s+v,0);
+  const labels={ALL:'הכל',ALERT:'התרעה',WATCH:'מעקב',OK:'תקין'};
+  const colors={ALL:{c:'#475569',bg:'#f1f5f9'},ALERT:{c:'#dc2626',bg:'#fef2f2'},WATCH:{c:'#d97706',bg:'#fffbeb'},OK:{c:'#16a34a',bg:'#f0fdf4'}};
+  document.getElementById('pills').innerHTML=PO.map(a=>{
+    const n=a==='ALL'?t:(c[a]||0);if(a!=='ALL'&&n===0)return'';const cl=colors[a];
+    return`<div class="pill ${state.alert===a?'active':''}" data-a="${a}" style="background:${cl.bg};color:${cl.c}">${labels[a]} ${n}</div>`;}).join('');
+  document.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{state.alert=p.dataset.a;render();});
+}
+
+function renderCards(){
+  const c=getCounts();
+  const items=[
+    {k:'ALERT',l:'התרעה',c:'#dc2626',bg:'#fef2f2'},
+    {k:'WATCH',l:'מעקב',c:'#d97706',bg:'#fffbeb'},
+    {k:'OK',l:'תקין',c:'#16a34a',bg:'#f0fdf4'}
+  ];
+  document.getElementById('cards').innerHTML=items.map(i=>
+    `<div class="card" style="background:${i.bg}"><div class="cl" style="color:${i.c}">${i.l}</div><div class="cv" style="color:${i.c}">${c[i.k]||0}</div></div>`
+  ).join('');
+}
+
+function renderTable(){
+  const f=getFiltered();document.getElementById('wellCount').textContent=f.length+' קידוחים';
+  const cols=[
+    {k:'a',l:'סטטוס',t:'סיווג התרעה',s:1},
+    {k:'w',l:'קידוח',t:'שם הקידוח',s:1},
+    {k:'p2',l:'פרמטר'},
+    {k:'pct',l:'% מתקן',t:'ריכוז אחרון / תקן מי שתייה',s:1},
+    {k:'lc',l:'אחרון',t:'ריכוז אחרון µg/L',s:1},
+    {k:'spc',l:'שיפוע',t:'קצב שינוי: % מתקן לשנה (5 שנים)',s:1},
+    {k:'snr',l:'SNR',t:'יחס אות/רעש: ≥1 חזק, 0.3-1 בינוני',s:1},
+    {k:'yt',l:'שנים→תקן',t:'שנים עד הגעה ל-100% מהתקן',s:1},
+    {k:'tr',l:'⚡',t:'שתי הדגימות האחרונות בעלייה'}
+  ];
+  document.getElementById('thead').innerHTML=cols.map(c=>
+    `<th data-col="${c.k}" title="${c.t||''}">${c.l}${state.sortCol===c.k?(state.sortDir>0?' ↓':' ↑'):''}</th>`).join('');
+  document.querySelectorAll('#thead th').forEach(th=>{
+    const col=th.dataset.col;if(cols.find(c=>c.k===col&&c.s))
+      th.onclick=()=>{if(state.sortCol===col)state.sortDir*=-1;else{state.sortCol=col;state.sortDir=1;}render();};});
+  
+  document.getElementById('tbody').innerHTML=f.map(s=>{
+    const key=s.w+'||'+s.p;const sel=state.selected.includes(key)?'sel':'';
+    const pc=s.pct>=0.8?'#dc2626':s.pct>=0.3?'#d97706':'#64748b';
+    const spcC=s.spc>0?'#ea580c':s.spc<0?'#2563eb':'#94a3b8';
+    const snrC=s.snr>=1?'#16a34a':s.snr>=0.3?'#d97706':'#94a3b8';
+    const ytS=s.yt===0?'כעת':s.yt?s.yt.toFixed(1):'—';
+    const ytC=s.yt!==null&&s.yt<=5?'#dc2626':s.yt!==null&&s.yt<=10?'#d97706':'#94a3b8';
+    return`<tr class="${sel}" data-k="${key}">
+      <td>${badge(s.a)}</td>
+      <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;font-weight:500">${s.w}</td>
+      <td style="font-size:10px;color:#94a3b8">${s.p}</td>
+      <td class="mono" style="color:${pc};font-weight:700">${(s.pct*100).toFixed(0)}%</td>
+      <td class="mono">${s.lc}</td>
+      <td class="mono" style="color:${spcC}">${s.spc?(s.spc>0?'+':'')+s.spc.toFixed(1):''}</td>
+      <td class="mono" style="color:${snrC}">${s.snr?s.snr.toFixed(1):''}</td>
+      <td class="mono" style="color:${ytC}">${ytS}</td>
+      <td style="text-align:center">${s.tr?'⚡':''}</td>
+    </tr>`;}).join('');
+  document.querySelectorAll('#tbody tr').forEach(tr=>{tr.onclick=()=>{
+    const k=tr.dataset.k;
+    if(state.selected.includes(k))state.selected=state.selected.filter(x=>x!==k);
+    else if(state.selected.length>=6)state.selected=[...state.selected.slice(1),k];
+    else state.selected.push(k);render();};});
+}
+
+function renderCharts(){
+  const b=document.getElementById('chartBody');const h=document.getElementById('chartHeader');
+  if(!state.selected.length){h.textContent='בחר קידוחים מהטבלה ←';
+    b.innerHTML='<div class="empty"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-8"/></svg><div style="font-size:14px;font-weight:500">לחץ על קידוחים בטבלה</div></div>';return;}
+  h.textContent=state.selected.length+' קידוחים נבחרו';
+  b.innerHTML=state.selected.map(k=>{const[w,p]=k.split('||');const s=DATA.stats.find(x=>x.w===w&&x.p===p);
+    if(!s)return'';const c=AC[s.a]||AC.OK;
+    return`<div class="cbox">
+      <div class="ct" style="color:${c.c}">${badge(s.a)} ${s.w}</div>
+      <div class="cs">${DATA.meta.paramNames[s.p]} · ${s.lc} µg/L · ${s.ld} · ${(s.pct*100).toFixed(0)}% מתקן${s.spc?' · שיפוע '+(s.spc>0?'+':'')+s.spc.toFixed(1)+'%/שנה':''}${s.tr?' · ⚡':''}${s.yt?' · '+s.yt.toFixed(1)+' שנים לתקן':''}</div>
+      <canvas data-k="${k}" style="width:100%;height:170px"></canvas>
+      <div class="legend"><span style="color:#dc2626">━━</span> תקן (${s.std}) &nbsp; <span style="color:#d97706">╌╌</span> 30% (${(s.std*0.3).toFixed(1)})${s.cp?' &nbsp; <span style="color:#8b5cf6">┃</span> שינוי מבני':''} &nbsp; ● נמדד &nbsp; ○ <LOD</div>
+    </div>`;}).join('');
+  requestAnimationFrame(()=>{b.querySelectorAll('canvas').forEach(c=>{const k=c.dataset.k;const[w,p]=k.split('||');
+    const s=DATA.stats.find(x=>x.w===w&&x.p===p);if(s)drawChart(c,k,s);});});
+}
+
+function render(){renderPills();renderCards();renderTable();renderCharts();}
+
+// Init
+fetch('payload.json')
+  .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(d=>{
+    DATA=d;
+    const pS=document.getElementById('paramSel');
+    Object.entries(DATA.meta.paramNames).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v;pS.appendChild(o);});
+    pS.onchange=()=>{state.param=pS.value;render();};
+    const bS=document.getElementById('basinSel');
+    [...new Set(DATA.stats.map(s=>s.b).filter(Boolean))].sort().forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;bS.appendChild(o);});
+    bS.onchange=()=>{state.basin=bS.value;render();};
+    document.getElementById('searchBox').oninput=e=>{state.search=e.target.value;renderTable();};
+    document.getElementById('infoBtn').onclick=()=>{document.getElementById('mo').style.display='flex';};
+    document.getElementById('uniqueChk').onchange=e=>{state.unique=e.target.checked;render();};
+    render();
+  })
+  .catch(e=>{
+    document.body.innerHTML='<div style="padding:40px;font-family:Rubik,sans-serif;color:#dc2626;font-size:16px;">שגיאה בטעינת הנתונים: '+e.message+'<br><br>יש להריץ את הדשבורד דרך שרת HTTP (python -m http.server)</div>';
+  });
+</script></body></html>
